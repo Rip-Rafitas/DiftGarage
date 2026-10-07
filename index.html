@@ -2,7 +2,7 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drift Garage</title>
     <style>
         /* Estilos Gerais */
@@ -12,8 +12,6 @@
             color: #ffffff;
             margin: 0;
             padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
         }
 
         /* Cabeçalho */
@@ -43,7 +41,6 @@
             max-width: 1200px;
             margin: 40px auto;
             padding: 0 20px;
-            padding-bottom: 120px; /* Espaço para os botões não taparem o conteúdo */
         }
 
         /* Secção da Garagem (Grelha de Carros) */
@@ -64,7 +61,7 @@
             border: 1px solid #333;
         }
 
-        .car-card:hover, .car-card.active-mobile {
+        .car-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 20px rgba(255, 69, 0, 0.2);
             border-color: #ff4500;
@@ -117,50 +114,6 @@
             color: #555;
             font-size: 0.9rem;
         }
-
-        /* BOTÕES DE CONTROLO MOBILE */
-        #mobileNav {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            justify-content: space-between;
-            z-index: 9999;
-            pointer-events: none;
-        }
-
-        .nav-btn {
-            pointer-events: auto;
-            background-color: rgba(255, 69, 0, 0.2);
-            border: 2px solid rgba(255, 69, 0, 0.6);
-            color: white;
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
-            font-size: 28px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            outline: none;
-        }
-
-        .nav-btn:active {
-            background-color: rgba(255, 69, 0, 0.8);
-            border-color: #ff4500;
-            transform: scale(0.95);
-        }
-
-        @media (max-width: 768px) {
-            #mobileNav {
-                display: flex;
-            }
-        }
     </style>
 </head>
 <body>
@@ -176,7 +129,7 @@
         <div class="garage-grid">
             
             <!-- Carro 1 -->
-            <div class="car-card" id="car0">
+            <div class="car-card">
                 <div class="car-image">FOTO DO CARRO</div>
                 <div class="car-info">
                     <h3>Nissan Silvia S15</h3>
@@ -189,7 +142,7 @@
             </div>
 
             <!-- Carro 2 -->
-            <div class="car-card" id="car1">
+            <div class="car-card">
                 <div class="car-image">FOTO DO CARRO</div>
                 <div class="car-info">
                     <h3>Toyota AE86</h3>
@@ -202,7 +155,7 @@
             </div>
 
             <!-- Carro 3 -->
-            <div class="car-card" id="car2">
+            <div class="car-card">
                 <div class="car-image">FOTO DO CARRO</div>
                 <div class="car-info">
                     <h3>BMW E36 M3</h3>
@@ -217,48 +170,9 @@
         </div>
     </div>
 
-    <!-- Interface Física de Botões para o Telemóvel -->
-    <div id="mobileNav">
-        <button class="nav-btn" id="goLeft">◀</button>
-        <button class="nav-btn" id="goRight">▶</button>
-    </div>
-
     <footer>
         <p>&copy; 2026 Drift Garage. Criado com HTML e CSS no GitHub.</p>
     </footer>
-
-    <script>
-        // Sistema mecânico de navegação tátil por toque
-        const cars = [document.getElementById('car0'), document.getElementById('car1'), document.getElementById('car2')];
-        let currentIndex = 0;
-
-        function updateMobileSelection(index) {
-            cars.forEach(car => car.classList.remove('active-mobile'));
-            cars[index].classList.add('active-mobile');
-            cars[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        // Ativar o primeiro por padrão no mobile
-        if (window.innerWidth <= 768) {
-            updateMobileSelection(currentIndex);
-        }
-
-        document.getElementById('goLeft').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (currentIndex > 0) {
-                currentIndex--;
-                updateMobileSelection(currentIndex);
-            }
-        });
-
-        document.getElementById('goRight').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (currentIndex < cars.length - 1) {
-                currentIndex++;
-                updateMobileSelection(currentIndex);
-            }
-        });
-    </script>
 
 </body>
 </html>
