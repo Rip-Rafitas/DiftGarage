@@ -2,14 +2,19 @@
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drift Garage - Jogo com Bots</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Drift Garage Mobile</title>
     <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
         body {
             margin: 0;
             padding: 0;
             background-color: #121212;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -18,33 +23,28 @@
             color: white;
             overflow: hidden;
         }
+
+        /* Menu Inicial */
         #menuContainer {
             background-color: #1e1e1e;
-            padding: 40px;
+            padding: 30px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.7);
             text-align: center;
             border: 2px solid #ff4500;
             max-width: 400px;
             width: 90%;
+            z-index: 10;
         }
         #menuContainer h1 {
             color: #ff4500;
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             margin-top: 0;
             text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        #menuContainer p {
-            color: #aaa;
-            margin-bottom: 25px;
-        }
-        .input-group {
-            margin-bottom: 20px;
         }
         #playerNameInput {
-            width: 80%;
-            padding: 12px 20px;
+            width: 85%;
+            padding: 12px;
             font-size: 16px;
             border: 2px solid #333;
             border-radius: 25px;
@@ -52,7 +52,7 @@
             color: white;
             outline: none;
             text-align: center;
-            transition: border-color 0.3s;
+            margin-bottom: 20px;
         }
         #playerNameInput:focus {
             border-color: #ff4500;
@@ -61,75 +61,99 @@
             background: linear-gradient(135deg, #ff4500, #b30000);
             color: white;
             border: none;
-            padding: 12px 35px;
+            padding: 12px 40px;
             font-size: 18px;
             font-weight: bold;
             border-radius: 25px;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
-            transition: transform 0.2s, box-shadow 0.2s;
         }
-        #startBtn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.6);
-        }
+
+        /* Contentor do Jogo */
         #gameContainer {
             display: none;
+            position: relative;
+            width: 100%;
+            max-width: 800px;
             text-align: center;
         }
         #gameUi {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            width: 800px;
-            max-width: 100%;
-            margin-bottom: 10px;
-            padding: 0 10px;
-            box-sizing: border-box;
-        }
-        #playerGreeting {
-            font-size: 20px;
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
             font-weight: bold;
-            color: #fff;
-        }
-        #score {
-            font-size: 22px;
-            font-weight: bold;
-            color: #ff4500;
         }
         canvas {
             background-color: #282828;
-            border: 4px solid #ff4500;
+            border: 3px solid #ff4500;
             border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 100%;
+            height: auto;
             display: block;
+            margin: 0 auto;
         }
-        .controls-info {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #888;
+
+        /* Botões Virtuais para Telemóvel */
+        #mobileControls {
+            display: none;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto 0 auto;
+            padding: 0 20px;
+        }
+        .btn-dir {
+            background-color: rgba(255, 69, 0, 0.7);
+            border: 2px solid #ff4500;
+            color: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            font-size: 30px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+        }
+        .btn-dir:active {
+            background-color: #b30000;
+        }
+
+        /* Ativar botões apenas em ecrãs táteis/pequenos */
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: flex;
+            }
         }
     </style>
 </head>
 <body>
+
+    <!-- MENU -->
     <div id="menuContainer">
         <h1>Drift Garage</h1>
-        <p>Prepara a tua máquina e enfrenta os Bots</p>
-        <div class="input-group">
-            <input type="text" id="playerNameInput" placeholder="Digita o teu nome..." maxlength="15" autocomplete="off">
-        </div>
-        <button id="startBtn">Jogar</button>
+        <p>Digita o teu nome para correr contra os Bots</p>
+        <input type="text" id="playerNameInput" placeholder="Teu Nome..." maxlength="12" autocomplete="off">
+        <br>
+        <button id="startBtn">Entrar no Jogo</button>
     </div>
+
+    <!-- JOGO -->
     <div id="gameContainer">
         <div id="gameUi">
-            <div id="playerGreeting">Piloto: <span id="displayPlayerName" style="color: #ff4500;"></span></div>
+            <div>Piloto: <span id="displayPlayerName" style="color:#ff4500"></span></div>
             <div id="score">Pontos: 0</div>
         </div>
-        <canvas id="gameCanvas" width="800" height="500"></canvas>
-        <div class="controls-info">
-            <strong>Controlos:</strong> Usa as Setas Esquerda/Direita (ou A/D) para curvar e fazer drift!
+
+        <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+        <!-- Controlos Mobile -->
+        <div id="mobileControls">
+            <button class="btn-dir" id="btnLeft">◀</button>
+            <button class="btn-dir" id="btnRight">▶</button>
         </div>
     </div>
     <script>
@@ -142,15 +166,16 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
+        const btnLeft = document.getElementById("btnLeft");
+        const btnRight = document.getElementById("btnRight");
+
         let score = 0;
         let gameOver = false;
         let gameStarted = false;
         let playerName = "Piloto";
 
         startBtn.addEventListener("click", startGame);
-        playerNameInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") startGame();
-        });
+        playerNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") startGame(); });
 
         function startGame() {
             if (playerNameInput.value.trim() !== "") {
@@ -163,69 +188,94 @@
             resetGame();
         }
 
+        // Jogador (Carro Vermelho)
         const player = {
             x: canvas.width / 2 - 15,
-            y: canvas.height - 90,
+            y: canvas.height - 85,
             width: 32,
             height: 55,
-            speed: 7,
+            speed: 8,
             driftAngle: 0,
             maxDrift: 18
         };
 
+        // Bots
         const bots = [];
-        const botCount = 4;
+        const botCount = 3;
         const botColors = ["#888888", "#3a5fcd", "#008b45", "#cd8500"];
 
         function createBot(index) {
             return {
                 x: Math.random() * (canvas.width - 40) + 5,
-                y: -Math.random() * 400 - (index * 160) - 100,
+                y: -Math.random() * 300 - (index * 180) - 100,
                 width: 32,
                 height: 55,
-                speed: Math.random() * 3 + 5,
+                speed: Math.random() * 2 + 5,
                 color: botColors[Math.floor(Math.random() * botColors.length)]
             };
         }
 
-        const keys = {};
-        window.addEventListener("keydown", (e) => { if(gameStarted) keys[e.key] = true; });
-        window.addEventListener("keyup", (e) => { if(gameStarted) keys[e.key] = false; });
+        // Gestão de comandos (Teclado + Toque)
+        const keys = { Left: false, Right: false };
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft" || e.key === "a") keys.Left = true;
+            if (e.key === "ArrowRight" || e.key === "d") keys.Right = true;
+        });
+        window.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowLeft" || e.key === "a") keys.Left = false;
+            if (e.key === "ArrowRight" || e.key === "d") keys.Right = false;
+        });
+
+        // Eventos Touch para o Telemóvel
+        btnLeft.addEventListener("touchstart", (e) => { e.preventDefault(); keys.Left = true; });
+        btnLeft.addEventListener("touchend", (e) => { e.preventDefault(); keys.Left = false; });
+        btnRight.addEventListener("touchstart", (e) => { e.preventDefault(); keys.Right = true; });
+        btnRight.addEventListener("touchend", (e) => { e.preventDefault(); keys.Right = false; });
 
         function drawCar(x, y, width, height, color, angle = 0) {
             ctx.save();
             ctx.translate(x + width / 2, y + height / 2);
             ctx.rotate(angle * Math.PI / 180);
-            ctx.fillStyle = "rgba(0,0,0,0.2)";
-            ctx.fillRect(-width / 2 + 4, -height / 2 + 4, width, height);
+            
+            // Sombra
+            ctx.fillStyle = "rgba(0,0,0,0.15)";
+            ctx.fillRect(-width / 2 + 3, -height / 2 + 3, width, height);
+
+            // Chassi
             ctx.fillStyle = color;
             ctx.fillRect(-width / 2, -height / 2, width, height);
+            
+            // Spoiler
             ctx.fillStyle = "#111";
             ctx.fillRect(-width / 2 - 2, height / 2 - 4, width + 4, 5);
+            
+            // Vidros
             ctx.fillStyle = "#add8e6";
-            ctx.fillRect(-width / 2 + 3, -height / 2 + 10, width - 6, 12);
+            ctx.fillRect(-width / 2 + 3, -height / 2 + 8, width - 6, 12);
             ctx.fillRect(-width / 2 + 3, -height / 2 + 28, width - 6, 8);
+            
+            // Faróis
             ctx.fillStyle = "#ffff00";
             ctx.fillRect(-width / 2 + 3, -height / 2, 6, 3);
             ctx.fillRect(width / 2 - 9, -height / 2, 6, 3);
-            ctx.fillStyle = "#ff0000";
-            ctx.fillRect(-width / 2 + 2, height / 2 - 2, 5, 2);
-            ctx.fillRect(width / 2 - 7, height / 2 - 2, 5, 2);
+
             ctx.restore();
         }
 
         function update() {
             if (!gameStarted) return;
+
             if (gameOver) {
-                if (keys["ArrowLeft"] || keys["ArrowRight"] || keys["a"] || keys["d"]) {
-                    resetGame();
-                }
+                if (keys.Left || keys.Right) resetGame();
                 return;
             }
-            if (keys["ArrowLeft"] || keys["a"]) {
+
+            // Movimentação por teclado ou botões touch
+            if (keys.Left) {
                 if (player.x > 5) player.x -= player.speed;
                 if (player.driftAngle > -player.maxDrift) player.driftAngle -= 2.5;
-            } else if (keys["ArrowRight"] || keys["d"]) {
+            } else if (keys.Right) {
                 if (player.x < canvas.width - player.width - 5) player.x += player.speed;
                 if (player.driftAngle < player.maxDrift) player.driftAngle += 2.5;
             } else {
@@ -233,13 +283,18 @@
                 if (player.driftAngle < 0) player.driftAngle += 1.5;
                 if (Math.abs(player.driftAngle) < 1.5) player.driftAngle = 0;
             }
+
+            // Atualizar Bots
             bots.forEach((bot, index) => {
                 bot.y += bot.speed;
+
                 if (bot.y > canvas.height) {
                     score += 10;
                     scoreElement.innerText = "Pontos: " + score;
                     bots[index] = createBot(index);
                 }
+
+                // Colisões
                 if (
                     player.x < bot.x + bot.width &&
                     player.x + player.width > bot.x &&
@@ -253,6 +308,8 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Linhas de estrada
             ctx.strokeStyle = "#444";
             ctx.lineWidth = 3;
             for (let i = 0; i < canvas.width; i += 100) {
@@ -261,20 +318,25 @@
                 ctx.lineTo(i, canvas.height);
                 ctx.stroke();
             }
-            bots.forEach(bot => {
-                drawCar(bot.x, bot.y, bot.width, bot.height, bot.color);
-            });
+
+            // Desenhar Bots
+            bots.forEach(bot => { drawCar(bot.x, bot.y, bot.width, bot.height, bot.color); });
+
+            // Desenhar Jogador
             drawCar(player.x, player.y, player.width, player.height, "#ff4500", player.driftAngle);
+
             if (gameOver) {
-                ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
                 ctx.fillStyle = "#ff4500";
-                ctx.font = "bold 38px Arial";
+                ctx.font = "bold 32px Arial";
                 ctx.textAlign = "center";
                 ctx.fillText("FIM DA CORRIDA, " + playerName.toUpperCase() + "!", canvas.width / 2, canvas.height / 2 - 20);
+                
                 ctx.fillStyle = "white";
-                ctx.font = "20px Arial";
-                ctx.fillText("Carrega nas Setas ou A/D para voltar à pista", canvas.width / 2, canvas.height / 2 + 30);
+                ctx.font = "18px Arial";
+                ctx.fillText("Toca nos controlos para reiniciar", canvas.width / 2, canvas.height / 2 + 30);
             }
         }
 
@@ -285,9 +347,7 @@
             player.driftAngle = 0;
             gameOver = false;
             bots.length = 0;
-            for (let i = 0; i < botCount; i++) {
-                bots.push(createBot(i));
-            }
+            for (let i = 0; i < botCount; i++) { bots.push(createBot(i)); }
         }
 
         function gameLoop() {
@@ -295,6 +355,7 @@
             draw();
             requestAnimationFrame(gameLoop);
         }
+
         gameLoop();
     </script>
 </body>
