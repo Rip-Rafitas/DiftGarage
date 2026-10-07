@@ -1,246 +1,264 @@
-* { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-body {
-margin: 0; padding: 0; background-color: #1a1c1e;
-font-family: Arial, sans-serif; display: flex; flex-direction: column;
-align-items: center; justify-content: center; min-height: 100vh;
-color: white; overflow: hidden;
-}
-#menuContainer {
-background-color: #25282a; padding: 30px; border-radius: 15px;
-box-shadow: 0 10px 30px rgba(0,0,0,0.7); text-align: center;
-border: 2px solid #ff4500; max-width: 400px; width: 90%; z-index: 10;
-}
-#menuContainer h1 { color: #ff4500; font-size: 2.2rem; margin-top: 0; text-transform: uppercase; }
-#playerNameInput {
-width: 85%; padding: 12px; font-size: 16px; border: 2px solid #333;
-border-radius: 25px; background-color: #333; color: white;
-outline: none; text-align: center; margin-bottom: 20px;
-}
-#startBtn {
-background: linear-gradient(135deg, #ff4500, #b30000); color: white;
-border: none; padding: 12px 40px; font-size: 18px; font-weight: bold;
-border-radius: 25px; cursor: pointer; text-transform: uppercase;
-}
-#gameContainer { display: none; position: relative; width: 100%; max-width: 800px; }
-#gameUi {
-position: absolute; top: 10px; left: 0; width: 100%;
-display: flex; justify-content: space-between; padding: 0 20px;
-font-size: 20px; font-weight: bold; pointer-events: none; z-index: 5;
-text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-}
-canvas {
-background-color: #23272a; border: 2px solid #333;
-max-width: 100%; height: auto; display: block; margin: 0 auto;
-}
-.instructions {
-position: absolute; bottom: 20px; width: 100%; text-align: center;
-color: #888; font-size: 14px; pointer-events: none;
-}
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Drift Garage</title>
+    <style>
+        /* Estilos Gerais */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
+        /* Cabeçalho */
+        header {
+            background: linear-gradient(135deg, #ff4500, #b30000);
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
 
-Drift Garage
-Digita o teu nome para começar a curvar
+        header h1 {
+            margin: 0;
+            font-size: 3.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
 
+        header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
 
+        /* Contentor Principal */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            padding-bottom: 120px; /* Espaço para os botões não taparem o conteúdo */
+        }
 
-Jogar
-Piloto: 
-Pontos: 0
+        /* Secção da Garagem (Grelha de Carros) */
+        .garage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
 
+        /* Cartão de Carro */
+        .car-card {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #333;
+        }
 
-CLICA E SEGURA no ecrã (ou Barra de Espaço) para fazer Drift à volta dos cones!
-const menuContainer = document.getElementById("menuContainer");
-const gameContainer = document.getElementById("gameContainer");
-const playerNameInput = document.getElementById("playerNameInput");
-const startBtn = document.getElementById("startBtn");
-const displayPlayerName = document.getElementById("displayPlayerName");
-const scoreElement = document.getElementById("score");
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-let score = 0;
-let gameOver = false;
-let gameStarted = false;
-let playerName = "rafa";
-let isDrifting = false;
-let currentCone = null;
-startBtn.addEventListener("click", startGame);
-playerNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") startGame(); });
-function startGame() {
-if (playerNameInput.value.trim() !== "") playerName = playerNameInput.value.trim();
-displayPlayerName.innerText = playerName;
-menuContainer.style.display = "none";
-gameContainer.style.display = "block";
-gameStarted = true;
-resetGame();
-}
-const car = {
-x: 100, y: 250,
-vx: 4, vy: 0,
-angle: 0, speed: 4.5,
-radius: 8, rAngle: 0
-};
-let driftSkids = [];
-let cones = [];
-function generateCones() {
-cones = [];
-let startX = 300;
-let startY = 250;
-for(let i=0; i<15; i++) {
-let angle = (i * 0.7) - 0.5;
-cones.push({
-x: startX + Math.cos(angle) * 160,
-y: startY + Math.sin(angle) * 160,
-passed: false
-});
-startX = cones[cones.length-1].x;
-startY = cones[cones.length-1].y;
-}
-}
-window.addEventListener("keydown", (e) => { if(e.key === " " || e.key === "ArrowUp") { e.preventDefault(); isDrifting = true; } });
-window.addEventListener("keyup", (e) => { if(e.key === " " || e.key === "ArrowUp") isDrifting = false; });
-canvas.addEventListener("mousedown", () => isDrifting = true);
-canvas.addEventListener("mouseup", () => isDrifting = false);
-canvas.addEventListener("touchstart", (e) => { e.preventDefault(); isDrifting = true; });
-canvas.addEventListener("touchend", (e) => { e.preventDefault(); isDrifting = false; });
-function getDistance(x1, y1, x2, y2) {
-return Math.sqrt((x2 - x1)**2 + (y2 - y1)**2);
-}
-function update() {
-if (!gameStarted || gameOver) {
-if (isDrifting && gameOver) resetGame();
-return;
-}
-if (isDrifting) {
-if (!currentCone) {
-let minDst = 9999;
-cones.forEach(cone => {
-let dst = getDistance(car.x, car.y, cone.x, cone.y);
-if (dst < minDst && dst < 220) {
-minDst = dst;
-currentCone = cone;
-}
-});
-}
-if (currentCone) {
-let dx = car.x - currentCone.x;
-let dy = car.y - currentCone.y;
-let radius = getDistance(car.x, car.y, currentCone.x, currentCone.y);
-let angle = Math.atan2(dy, dx);
-angle += car.speed / radius;
-car.x = currentCone.x + Math.cos(angle) * radius;
-car.y = currentCone.y + Math.sin(angle) * radius;
-car.vx = -Math.sin(angle) * car.speed;
-car.vy = Math.cos(angle) * car.speed;
-car.angle = Math.atan2(car.vy, car.vx);
-driftSkids.push({x: car.x, y: car.y});
-if(!currentCone.passed) {
-currentCone.passed = true;
-score += 1;
-scoreElement.innerText = score;
-}
-}
-} else {
-currentCone = null;
-if (car.vx === 4 && car.vy === 0) {
-} else {
-let heading = Math.atan2(car.vy, car.vx);
-car.vx = Math.cos(heading) * car.speed;
-car.vy = Math.sin(heading) * car.speed;
-}
-}
-car.x += car.vx;
-car.y += car.vy;
-car.angle = Math.atan2(car.vy, car.vx);
-let offsetX = canvas.width / 3 - car.x;
-let offsetY = canvas.height / 2 - car.y;
-if (car.x < -500 || car.x > 5000 || car.y < -2000 || car.y > 2000) {
-gameOver = true;
-}
-let closeToAnyCone = false;
-cones.forEach(cone => {
-if(getDistance(car.x, car.y, cone.x, cone.y) < 300) closeToAnyCone = true;
-});
-if (!closeToAnyCone && cones.length > 0) gameOver = true;
-}
-function draw() {
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-ctx.save();
-let camX = canvas.width / 4 - car.x;
-let camY = canvas.height / 2 - car.y;
-ctx.translate(camX, camY);
-ctx.strokeStyle = "#2d3236";
-ctx.lineWidth = 1;
-let gridSize = 60;
-for (let x = car.x - 600; x < car.x + 1000; x += gridSize) {
-ctx.beginPath(); ctx.moveTo(x - (x % gridSize), car.y - 400); ctx.lineTo(x - (x % gridSize), car.y + 400); ctx.stroke();
-}
-for (let y = car.y - 400; y < car.y + 600; y += gridSize) {
-ctx.beginPath(); ctx.moveTo(car.x - 600, y - (y % gridSize)); ctx.lineTo(car.x + 1000, y - (y % gridSize)); ctx.stroke();
-}
-if (isDrifting && currentCone) {
-ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-ctx.lineWidth = 2;
-ctx.beginPath();
-ctx.moveTo(car.x, car.y);
-ctx.lineTo(currentCone.x, currentCone.y);
-ctx.stroke();
-}
-ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
-ctx.lineWidth = 3;
-ctx.beginPath();
-for(let i=0; i<driftSkids.length; i++) {
-if(i===0) ctx.moveTo(driftSkids[i].x, driftSkids[i].y);
-else ctx.lineTo(driftSkids[i].x, driftSkids[i].y);
-}
-ctx.stroke();
-cones.forEach(cone => {
-ctx.fillStyle = "#ff4500";
-ctx.beginPath(); ctx.arc(cone.x, cone.y, 16, 0, Math.PI * 2); ctx.fill();
-ctx.fillStyle = "#ffffff";
-ctx.beginPath(); ctx.arc(cone.x, cone.y, 8, 0, Math.PI * 2); ctx.fill();
-ctx.fillStyle = "#ff4500";
-ctx.beginPath(); ctx.arc(cone.x, cone.y, 4, 0, Math.PI * 2); ctx.fill();
-});
-ctx.save();
-ctx.translate(car.x, car.y);
-ctx.rotate(car.angle);
-ctx.fillStyle = "#111111";
-ctx.fillRect(-15, -8, 30, 16);
-ctx.fillStyle = "#ff4500";
-ctx.fillRect(-17, -9, 3, 18);
-ctx.restore();
-ctx.fillStyle = "#ff4500";
-ctx.font = "bold 14px Arial";
-ctx.textAlign = "center";
-ctx.fillText(playerName, car.x, car.y - 16);
-ctx.restore();
-if (gameOver) {
-ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-ctx.fillStyle = "#ff4500";
-ctx.font = "bold 36px Arial";
-ctx.textAlign = "center";
-ctx.fillText("FALHASTE O DRIFT!", canvas.width / 2, canvas.height / 2 - 20);
-ctx.fillStyle = "white";
-ctx.font = "18px Arial";
-ctx.fillText("Toca ou Clica para tentar outra vez", canvas.width / 2, canvas.height / 2 + 30);
-}
-}
-function resetGame() {
-score = 0;
-scoreElement.innerText = score;
-car.x = 100; car.y = 250;
-car.vx = car.speed; car.vy = 0;
-car.angle = 0;
-driftSkids = [];
-currentCone = null;
-gameOver = false;
-generateCones();
-}
-function gameLoop() {
-update();
-draw();
-requestAnimationFrame(gameLoop);
-}
-generateCones();
-gameLoop();
+        .car-card:hover, .car-card.active-mobile {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(255, 69, 0, 0.2);
+            border-color: #ff4500;
+        }
+
+        /* Espaço para Imagem (Placeholder) */
+        .car-image {
+            width: 100%;
+            height: 200px;
+            background-color: #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .car-info {
+            padding: 20px;
+        }
+
+        .car-info h3 {
+            margin: 0 0 10px 0;
+            color: #ff4500;
+            font-size: 1.5rem;
+        }
+
+        .car-info p {
+            margin: 5px 0;
+            color: #cccccc;
+            font-size: 0.95rem;
+        }
+
+        .specs {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        /* Rodapé */
+        footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 60px;
+            background-color: #0a0a0a;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        /* BOTÕES DE CONTROLO MOBILE */
+        #mobileNav {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            justify-content: space-between;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .nav-btn {
+            pointer-events: auto;
+            background-color: rgba(255, 69, 0, 0.2);
+            border: 2px solid rgba(255, 69, 0, 0.6);
+            color: white;
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            outline: none;
+        }
+
+        .nav-btn:active {
+            background-color: rgba(255, 69, 0, 0.8);
+            border-color: #ff4500;
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            #mobileNav {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Drift Garage</h1>
+        <p>A minha coleção de máquinas preparadas para fazer fumo</p>
+    </header>
+
+    <div class="container">
+        <h2>As Minhas Máquinas</h2>
+        
+        <div class="garage-grid">
+            
+            <!-- Carro 1 -->
+            <div class="car-card" id="car0">
+                <div class="car-image">FOTO DO CARRO</div>
+                <div class="car-info">
+                    <h3>Nissan Silvia S15</h3>
+                    <p>Preparação completa para competição com kit de ângulo alargado e suspensão regulável.</p>
+                    <div class="specs">
+                        <span><strong>Motor:</strong> SR20DET</span>
+                        <span><strong>Potência:</strong> 400 cv</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carro 2 -->
+            <div class="car-card" id="car1">
+                <div class="car-image">FOTO DO CARRO</div>
+                <div class="car-info">
+                    <h3>Toyota AE86</h3>
+                    <p>O clássico intemporal do drift. Aligeirado ao máximo para uma condução purista e ágil.</p>
+                    <div class="specs">
+                        <span><strong>Motor:</strong> 4A-GE N/A</span>
+                        <span><strong>Potência:</strong> 180 cv</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carro 3 -->
+            <div class="car-card" id="car2">
+                <div class="car-image">FOTO DO CARRO</div>
+                <div class="car-info">
+                    <h3>BMW E36 M3</h3>
+                    <p>Diferencial soldado, travão de mão hidráulico e pronto para destruir pneus na pista.</p>
+                    <div class="specs">
+                        <span><strong>Motor:</strong> S50B32</span>
+                        <span><strong>Potência:</strong> 321 cv</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Interface Física de Botões para o Telemóvel -->
+    <div id="mobileNav">
+        <button class="nav-btn" id="goLeft">◀</button>
+        <button class="nav-btn" id="goRight">▶</button>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Drift Garage. Criado com HTML e CSS no GitHub.</p>
+    </footer>
+
+    <script>
+        // Sistema mecânico de navegação tátil por toque
+        const cars = [document.getElementById('car0'), document.getElementById('car1'), document.getElementById('car2')];
+        let currentIndex = 0;
+
+        function updateMobileSelection(index) {
+            cars.forEach(car => car.classList.remove('active-mobile'));
+            cars[index].classList.add('active-mobile');
+            cars[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Ativar o primeiro por padrão no mobile
+        if (window.innerWidth <= 768) {
+            updateMobileSelection(currentIndex);
+        }
+
+        document.getElementById('goLeft').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateMobileSelection(currentIndex);
+            }
+        });
+
+        document.getElementById('goRight').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (currentIndex < cars.length - 1) {
+                currentIndex++;
+                updateMobileSelection(currentIndex);
+            }
+        });
+    </script>
+
+</body>
+</html>
