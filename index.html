@@ -1,176 +1,307 @@
 <!DOCTYPE html>
-<html lang="pt"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Drift Garage</title>
-<style>
-:root{--bg:#1b1d22;--ground:#2a2d34;--line:#343841;--ink:#f2efe6;--hot:#ff5a36;--gold:#ffc83d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#d9d6cc;--ground:#c3c0b5;--line:#b3b0a4;--ink:#1b1d22}}
-:root[data-theme="dark"]{--bg:#1b1d22}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Barlow Condensed","Arial Narrow",Impact,sans-serif;overflow:hidden;touch-action:none;user-select:none}
-canvas{display:block;width:100%;height:100%}
-.hud{position:fixed;left:14px;right:14px;top:calc(10px + env(safe-area-inset-top,0px));display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;text-shadow:0 2px 6px rgba(0,0,0,.45)}
-.big{font-size:56px;font-weight:800;line-height:.9;color:var(--gold)}
-.mult{font-size:30px;font-weight:700;color:var(--hot)}
-.sm{font-size:18px;opacity:.85}
-.r{text-align:right}
-#msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;background:rgba(10,10,12,.7);color:#f2efe6;font-size:22px;line-height:1.3}
-#msg h1{font-size:64px;margin:0 0 6px;color:var(--gold);font-weight:800}
-#msg b{color:var(--hot)}
-#nm{margin-top:6px;font-size:28px;font-weight:700;font-family:inherit;padding:8px 14px;border-radius:10px;border:2px solid var(--gold);background:rgba(0,0,0,.4);color:#fff;text-align:center;width:240px}#go{display:block;margin:12px auto 0;font-size:30px;font-weight:800;font-family:inherit;padding:8px 36px;border-radius:10px;border:0;background:var(--gold);color:#1b1d22;cursor:pointer}#go:disabled{opacity:.4;cursor:default}#board{position:fixed;left:14px;top:calc(110px + env(safe-area-inset-top,0px));font-size:18px;pointer-events:none;text-shadow:0 2px 6px rgba(0,0,0,.5);min-width:150px}#board div{display:flex;justify-content:space-between;gap:14px}#board .me{color:var(--gold)}
-#dtime{font-size:22px;font-weight:700;min-height:26px}#bar{width:200px;height:8px;border-radius:4px;background:rgba(255,255,255,.2);margin-top:2px;opacity:0;transition:opacity .2s}#barf{display:block;height:100%;width:0;background:var(--hot);border-radius:4px}#trophy{position:fixed;right:14px;top:calc(124px + env(safe-area-inset-top,0px));font-family:inherit;font-size:20px;font-weight:700;padding:6px 14px;border-radius:10px;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.4);color:#f2efe6;cursor:pointer}#rec{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,10,12,.75);color:#f2efe6}#rec.on{display:flex}#rec .p{width:min(440px,90vw);max-height:84vh;overflow:auto}#rec h2{font-size:48px;margin:0 0 8px;color:var(--gold);font-weight:800}#rec h3{font-size:26px;margin:18px 0 6px;color:var(--hot)}#rec .row{display:flex;justify-content:space-between;gap:14px;font-size:22px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.14)}#rec .row.me{color:var(--gold)}#rec .hd{opacity:.6;font-size:16px}
-.tc{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:none;gap:10px}
-.tc button{width:68px;height:68px;border-radius:14px;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:#fff;font:700 18px inherit;font-family:inherit}
-@media (pointer:coarse){.tc{display:flex}}
-</style></head><body>
-<canvas id="c"></canvas>
-<div id="board"></div>
-<button id="trophy" tabindex="-1">🏆 RECORDES (T)</button>
-<div id="rec"><div class="p"><h2>RECORDES</h2><div id="mine"></div><h3>Ranking da sala</h3><div id="rank"></div><div class="sm" style="margin-top:14px;opacity:.6">T ou toque fora para fechar</div></div></div>
-<div class="hud">
-  <div><div class="big" id="cur">0</div><div class="mult" id="mul"></div><div id="dtime"></div><div id="bar"><i id="barf"></i></div></div>
-  <div class="r"><div class="sm">PONTOS <b id="tot">0</b> · RECORDE <b id="best">0</b></div><div class="big" style="color:var(--ink)"><span id="spd">0</span><span class="sm"> km/h</span></div></div>
-</div>
-<div class="tc" style="left:14px"><button data-k="left">◀</button><button data-k="right">▶</button></div>
-<div class="tc" style="right:14px"><button data-k="brake">FREIO</button><button data-k="hand">MÃO</button><button data-k="up">GÁS</button></div>
-<div id="msg"><div><h1>DRIFT GARAGE</h1>Derrape em volta dos pilares. Quanto mais longo o drift, maior o multiplicador.<br><br><b>W A S D</b> ou setas · <b>ESPAÇO</b> freio de mão · <b>C</b> troca a cor · <b>R</b> reinicia<br><br>Bater na parede ou num pilar zera o drift atual.<br><br>Quem abrir o link entra na mesma arena.<br>Qual é o seu nome de piloto?<br><input id="nm" maxlength="14" placeholder="Seu nome" autocomplete="off"><button id="go" disabled>ENTRAR</button></div></div>
-<script>
-const cv=document.getElementById('c'),ctx=cv.getContext('2d');
-let W,H,D;function rs(){D=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D}
-addEventListener('resize',rs);rs();
-const AW=1600,AH=1100; // meia-largura/meia-altura da arena
-const K={};const map={ArrowUp:'up',w:'up',W:'up',ArrowDown:'brake',s:'brake',S:'brake',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right',' ':'hand'};
-addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(map[e.key]){K[map[e.key]]=1;e.preventDefault()}if(e.key==='c'||e.key==='C')car.col=(car.col+1)%cols.length;if(e.key==='r'||e.key==='R')reset()});
-addEventListener('keyup',e=>{if(map[e.key])K[map[e.key]]=0});
-document.querySelectorAll('.tc button').forEach(b=>{const k=b.dataset.k;b.addEventListener('pointerdown',e=>{K[k]=1;e.preventDefault()});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>K[k]=0))});
-const msg=document.getElementById('msg');let paused=true,myName='';
-const nm=document.getElementById('nm'),go=document.getElementById('go');
-try{nm.value=localStorage.getItem('drift-name')||''}catch(e){}
-const chk=()=>{go.disabled=!nm.value.trim()};nm.addEventListener('input',chk);chk();
-function start(){const n=nm.value.trim().slice(0,14);if(!n)return;myName=n;try{localStorage.setItem('drift-name',n)}catch(e){}msg.style.display='none';paused=false;last=performance.now();for(const k in K)K[k]=0;board()}
-go.addEventListener('click',start);nm.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')start()});
-const cols=['#ff5a36','#3ea6ff','#ffc83d','#7be07b','#e8e8e8'];
-const car={x:0,y:700,a:-Math.PI/2,vx:0,vy:0,w:0,s:0,col:0};
-const pil=[];for(let i=0;i<14;i++){const t=i/14*Math.PI*2;pil.push({x:Math.cos(t)*560,y:Math.sin(t)*360-60,r:20})}
-[[-1000,-700],[1000,-700],[-1000,500],[1050,420],[0,-800],[-1250,-100],[1250,-100]].forEach(p=>pil.push({x:p[0],y:p[1],r:26}));
-let marks=[],smoke=[],cur=0,mult=1,dt0=0,still=0,total=0,best=0,flash=0,lastMark=null;
-try{best=+localStorage.getItem('drift-best')||0}catch(e){}
-const $=id=>document.getElementById(id);$('best').textContent=best;
-let dur=0,grace=0,angDeg=0,longest=0,bestDrift=0,totTime=0,recOpen=false;
-try{const st=JSON.parse(localStorage.getItem('drift-stats')||'{}');longest=+st.l||0;bestDrift=+st.b||0;totTime=+st.t||0}catch(e){}
-function saveStats(){try{localStorage.setItem('drift-stats',JSON.stringify({l:longest,b:bestDrift,t:totTime}))}catch(e){}}
-addEventListener('pagehide',saveStats);
-function reset(){Object.assign(car,{x:0,y:700,a:-Math.PI/2,vx:0,vy:0,w:0,s:0});cur=0;mult=1;dt0=0;total=0;marks=[];smoke=[];lastMark=null}
-function lose(){if(cur>0)flash=1;cur=0;mult=1;dt0=0;still=0}
-let cam={x:0,y:700,z:1},last=performance.now();
-function step(dt){
-  const c=car,fx=Math.cos(c.a),fy=Math.sin(c.a),rx=-fy,ry=fx;
-  let vf=c.vx*fx+c.vy*fy,vl=c.vx*rx+c.vy*ry;
-  if(K.up)vf+=560*dt;
-  if(K.brake){vf>20?vf-=1100*dt:vf=Math.max(vf-380*dt,-180)}
-  vf-=vf*0.75*dt;
-  if(K.hand)vf-=vf*0.9*dt;
-  const g=K.hand?0.9:(K.up&&Math.abs(vl)>120?3.4:5.2);
-  vl*=Math.exp(-g*dt);
-  const sp0=Math.hypot(vf,vl);
-  const tgt=((K.right?1:0)-(K.left?1:0));c.s+=(tgt-c.s)*Math.min(1,9*dt);
-  const dir=vf>=0?1:-1;
-  const tw=c.s*2.7*Math.min(1,sp0/230)*dir*(K.hand?1.35:1);
-  c.w+=(tw-c.w)*Math.min(1,7*dt);c.a+=c.w*dt;
-  c.vx=fx*vf+rx*vl;c.vy=fy*vf+ry*vl;c.x+=c.vx*dt;c.y+=c.vy*dt;
-  // paredes
-  let hit=0;
-  if(c.x<-AW){c.x=-AW;c.vx=Math.abs(c.vx)*.35;hit=1}if(c.x>AW){c.x=AW;c.vx=-Math.abs(c.vx)*.35;hit=1}
-  if(c.y<-AH){c.y=-AH;c.vy=Math.abs(c.vy)*.35;hit=1}if(c.y>AH){c.y=AH;c.vy=-Math.abs(c.vy)*.35;hit=1}
-  for(const p of pil){const dx=c.x-p.x,dy=c.y-p.y,d=Math.hypot(dx,dy),m=p.r+20;if(d<m){const nx=dx/d,ny=dy/d;c.x=p.x+nx*m;c.y=p.y+ny*m;const dn=c.vx*nx+c.vy*ny;if(dn<0){c.vx-=1.5*dn*nx;c.vy-=1.5*dn*ny;c.vx*=.6;c.vy*=.6}hit=1}}
-  if(hit)lose();
-  // drift
-  const sp=Math.hypot(c.vx,c.vy),vf2=c.vx*fx+c.vy*fy,vl2=c.vx*rx+c.vy*ry,ang=Math.atan2(Math.abs(vl2),Math.abs(vf2)+1);
-  const drifting=sp>170&&ang>0.2;
-  angDeg=Math.round(ang*57.3);
-  if(drifting){dur+=dt;grace=0;totTime+=dt;if(dur>longest)longest=dur}else{grace+=dt;if(grace>.3)dur=0}
-  if(drifting){still=0;dt0+=dt;mult=1+Math.min(9,Math.floor(dt0/2));cur+=sp*ang*dt*0.55*mult*0.4;}
-  else if(cur>0||dt0>0){still+=dt;if(still>0.9){if(cur>bestDrift)bestDrift=Math.round(cur);total+=Math.round(cur);saveStats();if(total>best){best=total;try{localStorage.setItem('drift-best',best)}catch(e){}$('best').textContent=best}cur=0;mult=1;dt0=0;still=0}}
-  // marcas e fumaça
-  if(sp>110&&ang>0.12){
-    const L=-15,sd=[-9,9],np=[];
-    sd.forEach(s=>np.push({x:c.x+fx*L+rx*s,y:c.y+fy*L+ry*s}));
-    if(lastMark){np.forEach((p,i)=>marks.push({x1:lastMark[i].x,y1:lastMark[i].y,x2:p.x,y2:p.y,a:Math.min(.55,ang*1.2)}));if(marks.length>3200)marks.splice(0,200)}
-    lastMark=np;
-    if(Math.random()<.9)smoke.push({x:np[0].x+(Math.random()-.5)*8,y:np[0].y+(Math.random()-.5)*8,vx:c.vx*.1,vy:c.vy*.1,l:1,r:6});
-    if(Math.random()<.9)smoke.push({x:np[1].x,y:np[1].y,vx:c.vx*.1,vy:c.vy*.1,l:1,r:6});
-  }else lastMark=null;
-  for(let i=smoke.length-1;i>=0;i--){const s=smoke[i];s.x+=s.vx*dt;s.y+=s.vy*dt;s.l-=dt*1.1;s.r+=dt*28;if(s.l<=0)smoke.splice(i,1)}
-  flash=Math.max(0,flash-dt*2.5);
-  const dtEl=$('dtime');
-  if(dur>0.15){dtEl.textContent='DERRAPANDO '+dur.toFixed(1)+'s · '+angDeg+'°'+(mult<10?' · próx. x'+(mult+1):' · MAX')+(dur>=longest&&dur>2?' ★':'');$('bar').style.opacity=1;$('barf').style.width=(mult<10?(dt0%2)/2*100:100)+'%'}
-  else{dtEl.textContent=cur>0?'Fechando o combo…':'';$('bar').style.opacity=0}
-  $('cur').textContent=Math.round(cur);$('mul').textContent=mult>1?'x'+mult:'';$('tot').textContent=total;$('spd').textContent=Math.round(sp*0.22);
-  $('cur').style.opacity=cur>0?1:.35;$('cur').style.color=flash>0?'#ff3b30':'var(--gold)';
-  net(dt,drifting);
-  const z=1.05-Math.min(.3,sp/2400);cam.z+=(z-cam.z)*Math.min(1,2*dt);
-  cam.x+=(c.x+c.vx*.25-cam.x)*Math.min(1,5*dt);cam.y+=(c.y+c.vy*.25-cam.y)*Math.min(1,5*dt);
-}
-function draw(){
-  const cs=getComputedStyle(document.documentElement),bg=cs.getPropertyValue('--bg'),gr=cs.getPropertyValue('--ground'),ln=cs.getPropertyValue('--line');
-  ctx.setTransform(D,0,0,D,0,0);ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-  ctx.save();ctx.translate(W/2,H/2);ctx.scale(cam.z,cam.z);ctx.translate(-cam.x,-cam.y);
-  ctx.fillStyle=gr;ctx.fillRect(-AW,-AH,AW*2,AH*2);
-  ctx.strokeStyle=ln;ctx.lineWidth=1;ctx.beginPath();
-  for(let x=-AW;x<=AW;x+=100){ctx.moveTo(x,-AH);ctx.lineTo(x,AH)}for(let y=-AH;y<=AH;y+=100){ctx.moveTo(-AW,y);ctx.lineTo(AW,y)}ctx.stroke();
-  // linha de largada
-  ctx.fillStyle='rgba(255,255,255,.35)';for(let i=-3;i<3;i++){ctx.fillRect(i*30,760,15,8);ctx.fillRect(i*30+15,768,15,8)}
-  ctx.lineCap='round';ctx.lineWidth=5;
-  for(const m of marks){ctx.strokeStyle='rgba(10,10,12,'+m.a+')';ctx.beginPath();ctx.moveTo(m.x1,m.y1);ctx.lineTo(m.x2,m.y2);ctx.stroke()}
-  // parede
-  ctx.strokeStyle='#ff5a36';ctx.lineWidth=10;ctx.setLineDash([40,40]);ctx.strokeRect(-AW,-AH,AW*2,AH*2);ctx.setLineDash([]);
-  ctx.strokeStyle='#f2efe6';ctx.lineWidth=10;ctx.setLineDash([40,40]);ctx.lineDashOffset=40;ctx.strokeRect(-AW,-AH,AW*2,AH*2);ctx.setLineDash([]);ctx.lineDashOffset=0;
-  for(const p of pil){ctx.fillStyle='#ff5a36';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();ctx.fillStyle='#f2efe6';ctx.beginPath();ctx.arc(p.x,p.y,p.r*.62,0,7);ctx.fill();ctx.fillStyle='#ff5a36';ctx.beginPath();ctx.arc(p.x,p.y,p.r*.25,0,7);ctx.fill()}
-  for(const p of peers){const r=R[p.peer];if(r){const q=p.presence;drawCar(r.x,r.y,r.a,cols[(q.c|0)%cols.length],0,q.b);ctx.font='bold 17px Arial,sans-serif';ctx.textAlign='center';ctx.fillStyle='#f2efe6';ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=3;const t=String(q.n).slice(0,14);ctx.strokeText(t,r.x,r.y-34);ctx.fillText(t,r.x,r.y-34)}}
-  drawCar(car.x,car.y,car.a,car.col,car.s,K.brake||K.hand);
-  ctx.font='bold 17px Arial,sans-serif';ctx.textAlign='center';ctx.fillStyle='#ffc83d';ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=3;ctx.strokeText(myName,car.x,car.y-34);ctx.fillText(myName,car.x,car.y-34);
-  for(const s of smoke){ctx.fillStyle='rgba(235,235,235,'+(s.l*.28)+')';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill()}
-  ctx.restore();
-}
-function drawCar(x,y,a,col,st,br){
-  ctx.save();ctx.translate(x,y);ctx.rotate(a);
-  ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(-20,-12,44,28);
-  ctx.fillStyle='#111';const sa=st*.5;
-  [[-14,-11,0],[-14,11,0],[14,-11,sa],[14,11,sa]].forEach(w=>{ctx.save();ctx.translate(w[0],w[1]);ctx.rotate(w[2]);ctx.fillRect(-6,-3,12,6);ctx.restore()});
-  ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(-22,-10,44,20,6);ctx.fill();
-  ctx.fillStyle='rgba(20,24,30,.85)';ctx.fillRect(-4,-8,12,16);ctx.fillRect(-18,-8,4,16);
-  ctx.fillStyle='#fff7c2';ctx.fillRect(20,-9,3,5);ctx.fillRect(20,4,3,5);
-  ctx.fillStyle=br?'#ff2a2a':'#7a1d1d';ctx.fillRect(-23,-9,3,5);ctx.fillRect(-23,4,3,5);
-  ctx.restore();
-}
-let room=null,peers=[],R={},nt=0,bt=0;
-(async()=>{try{if(window.claude){room=await claude.use("room");if(room)room.onPeers(c=>{peers=c.peers.filter(p=>!p.isMe&&p.presence&&p.presence.n&&isFinite(p.presence.x)&&isFinite(p.presence.y)&&isFinite(p.presence.a));board()},()=>{})}}catch(e){room=null}})();
-function net(dt,dr){
-  for(const p of peers){const q=p.presence,r=R[p.peer]||(R[p.peer]={x:+q.x,y:+q.y,a:+q.a}),k=Math.min(1,12*dt);
-    r.x+=(q.x-r.x)*k;r.y+=(q.y-r.y)*k;const da=Math.atan2(Math.sin(q.a-r.a),Math.cos(q.a-r.a));r.a+=da*k;
-    if(q.dr&&Math.random()<.6)smoke.push({x:r.x-Math.cos(r.a)*15,y:r.y-Math.sin(r.a)*15,vx:0,vy:0,l:1,r:6})}
-  bt+=dt;if(bt>.5){bt=0;board()}
-  if(!room)return;
-  nt+=dt;if(nt>.05){nt=0;room.presence({n:myName,x:+car.x.toFixed(1),y:+car.y.toFixed(1),a:+car.a.toFixed(2),c:car.col,s:total,ld:+longest.toFixed(1),dr:dr?1:0,b:(K.brake||K.hand)?1:0}).catch(()=>{})}
-}
-function board(){
-  if(recOpen)renderRec();const el=document.getElementById('board');if(!room||!peers.length){el.replaceChildren();return}
-  const rows=[{n:myName,s:total,me:1}].concat(peers.map(p=>({n:String(p.presence.n).slice(0,14),s:Number(p.presence.s)||0}))).sort((a,b)=>b.s-a.s);
-  el.replaceChildren(...rows.map(r=>{const d=document.createElement('div');if(r.me)d.className='me';const a=document.createElement('span'),b=document.createElement('span');a.textContent=r.n;b.textContent=r.s;d.append(a,b);return d}));
-}
-const fmt=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
-function row(a,b,cls){const d=document.createElement('div');d.className='row'+(cls?' '+cls:'');const x=document.createElement('span'),y=document.createElement('span');x.textContent=a;y.textContent=b;d.append(x,y);return d}
-function renderRec(){
-  $('mine').replaceChildren(row('Maior pontuação',best),row('Melhor drift único',bestDrift),row('Drift mais longo',longest.toFixed(1)+' s'),row('Tempo total derrapando',fmt(totTime)),row('Combo máximo','x10 a cada 18 s de drift'));
-  const rk=$('rank');
-  if(!room||!peers.length){rk.replaceChildren(row('Só você por aqui','—'),row('Convide amigos pelo menu de compartilhar',''));return}
-  const rows=[{n:myName,s:total,l:longest,me:1}].concat(peers.map(p=>({n:String(p.presence.n).slice(0,14),s:Number(p.presence.s)||0,l:Number(p.presence.ld)||0}))).sort((a,b)=>b.s-a.s);
-  const h=row('Piloto · pontos','maior drift');h.classList.add('hd');
-  rk.replaceChildren(h,...rows.map((r,i)=>row((i+1)+'. '+r.n+' · '+r.s,r.l.toFixed(1)+' s',r.me?'me':'')));
-}
-function togRec(){recOpen=!recOpen;$('rec').classList.toggle('on',recOpen);if(recOpen)renderRec()}
-$('trophy').addEventListener('click',()=>{togRec();$('trophy').blur()});
-$('rec').addEventListener('pointerdown',e=>{if(e.target===$('rec'))togRec()});
-addEventListener('keydown',e=>{if(e.target.tagName!=='INPUT'&&(e.key==='t'||e.key==='T'))togRec()});
-function loop(t){const dt=Math.min(.033,(t-last)/1000);last=t;if(!paused)step(dt);draw();requestAnimationFrame(loop)}
-requestAnimationFrame(loop);
-</script></body></html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drift Garage - Jogo com Bots</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Menu Inicial */
+        #menuContainer {
+            background-color: #1e1e1e;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            text-align: center;
+            border: 2px solid #ff4500;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        #menuContainer h1 {
+            color: #ff4500;
+            font-size: 2.5rem;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #menuContainer p {
+            color: #aaa;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        #playerNameInput {
+            width: 80%;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #333;
+            border-radius: 25px;
+            background-color: #2a2a2a;
+            color: white;
+            outline: none;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        #playerNameInput:focus {
+            border-color: #ff4500;
+        }
+
+        #startBtn {
+            background: linear-gradient(135deg, #ff4500, #b30000);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #startBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.6);
+        }
+
+        /* Área do Jogo (Escondida ao início) */
+        #gameContainer {
+            display: none;
+            text-align: center;
+        }
+
+        #gameUi {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 800px;
+            max-width: 100%;
+            margin-bottom: 10px;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        #playerGreeting {
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        #score {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ff4500;
+        }
+
+        canvas {
+            background-color: #282828;
+            border: 4px solid #ff4500;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: block;
+        }
+
+        .controls-info {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MENU INICIAL -->
+    <div id="menuContainer">
+        <h1>Drift Garage</h1>
+        <p>Prepara a tua máquina e enfrenta os Bots</p>
+        <div class="input-group">
+            <input type="text" id="playerNameInput" placeholder="Digita o teu nome..." maxlength="15" autocomplete="off">
+        </div>
+        <button id="startBtn">Jogar</button>
+    </div>
+
+    <!-- ÁREA DO JOGO -->
+    <div id="gameContainer">
+        <div id="gameUi">
+            <div id="playerGreeting">Piloto: <span id="displayPlayerName" style="color: #ff4500;"></span></div>
+            <div id="score">Pontos: 0</div>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+        <div class="controls-info">
+            <strong>Controlos:</strong> Usa as Setas Esquerda/Direita (or A/D) para curvar e fazer drift!
+        </div>
+    </div>
+
+    <script>
+        const menuContainer = document.getElementById("menuContainer");
+        const gameContainer = document.getElementById("gameContainer");
+        const playerNameInput = document.getElementById("playerNameInput");
+        const startBtn = document.getElementById("startBtn");
+        const displayPlayerName = document.getElementById("displayPlayerName");
+        const scoreElement = document.getElementById("score");
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let score = 0;
+        let gameOver = false;
+        let gameStarted = false;
+        let playerName = "Piloto";
+
+        // Detetar clique no botão de Start
+        startBtn.addEventListener("click", startGame);
+        
+        // Permitir entrar carregando no Enter
+        playerNameInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") startGame();
+        });
+
+        function startGame() {
+            if (playerNameInput.value.trim() !== "") {
+                playerName = playerNameInput.value.trim();
+            }
+            displayPlayerName.innerText = playerName;
+            
+            // Trocar os menus
+            menuContainer.style.display = "none";
+            gameContainer.style.display = "block";
+            
+            gameStarted = true;
+            resetGame();
+        }
+
+        // Jogador (Carro Vermelho)
+        const player = {
+            x: canvas.width / 2 - 15,
+            y: canvas.height - 90,
+            width: 32,
+            height: 55,
+            speed: 7,
+            driftAngle: 0,
+            maxDrift: 18
+        };
+
+        // Bots (Carros Inimigos)
+        const bots = [];
+        const botCount = 4;
+        const botColors = ["#888888", "#3a5fcd", "#008b45", "#cd8500"]; // Cores diferentes para os bots
+
+        function createBot(index) {
+            return {
+                x: Math.random() * (canvas.width - 40) + 5,
+                y: -Math.random() * 400 - (index * 160) - 100,
+                width: 32,
+                height: 55,
+                speed: Math.random() * 3 + 5,
+                color: botColors[Math.floor(Math.random() * botColors.length)]
+            };
+        }
+
+        // Teclas
+        const keys = {};
+        window.addEventListener("keydown", (e) => { if(gameStarted) keys[e.key] = true; });
+        window.addEventListener("keyup", (e) => { if(gameStarted) keys[e.key] = false; });
+
+        // Desenhar Carros
+        function drawCar(x, y, width, height, color, angle = 0) {
+            ctx.save();
+            ctx.translate(x + width / 2, y + height / 2);
+            ctx.rotate(angle * Math.PI / 180);
+            
+            // Sombra do carro
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
+            ctx.fillRect(-width / 2 + 4, -height / 2 + 4, width, height);
+
+            // Chassi Principal
+            ctx.fillStyle = color;
+            ctx.fillRect(-width / 2, -height / 2, width, height);
+            
+            // Spoiler traseiro (Asa de drift)
+            ctx.fillStyle = "#111";
+            ctx.fillRect(-width / 2 - 2, height / 2 - 4, width + 4, 5);
+            
+            // Para-brisas e Vidros
+            ctx.fillStyle = "#add8e6";
+            ctx.fillRect(-width / 2 + 3, -height / 2 + 10, width - 6, 12); // Frontal
+            ctx.fillRect(-width / 2 + 3, -height / 2 + 28, width - 6, 8);  // Traseiro
+            
+            // Faróis Dianteiros
+            ctx.fillStyle = "#ffff00";
+            ctx.fillRect(-width / 2 + 3, -height / 2, 6, 3);
+            ctx.fillRect(width / 2 - 9, -height / 2, 6, 3);
+
+            // Faróis de travão traseiros
+            ctx.fillStyle = "#ff0000";
+            ctx.fillRect(-width / 2 + 2, height / 2 - 2, 5, 2);
+            ctx.fillRect(width / 2 - 7, height / 2 - 2, 5, 2);
+
+            ctx.restore();
+        }
+
+        function update() {
+            if (!gameStarted) return;
+
+            if (gameOver) {
+                // Se perder, qualquer tecla de movimento reinicia a corrida
+                if (keys["ArrowLeft"] || keys["ArrowRight"] || keys["a"] || keys["d"]) {
+                    resetGame();
+                }
+                return;
+            }
+
+            // Movimento e Inclinação de Drift do Jogador
+            if (keys["ArrowLeft"] || keys["a"]) {
+                if (player.x > 5) player.x -= player.speed;
+                if (player.driftAngle > -player.maxDrift) player.driftAngle -= 2.5;
+            } else if (keys["ArrowRight"] || keys["d"]) {
+                if (player.x < canvas.width - player.width - 5) player.x += player.speed;
+                if (player.driftAngle < player.maxDrift) player.driftAngle += 2.5;
+            } else {
+                // Alinhar rodas quando solta as teclas
+                if (player.driftAngle > 0) player.driftAngle -= 1.5;
+                if (player.driftAngle < 0) player.driftAngle += 1.5;
+                if (Math.abs(player.driftAngle) < 1.5) player.driftAngle = 0;
+            }
+
+            // Movimentação dos Bots
+            bots.forEach((bot, index) => {
+                bot.y += bot.speed;
+
+                // Passou a meta (fundo do ecrã)
+                if (bot.y > canvas.height) {
+                    score += 10;
+                    scoreElement.innerText = "Pontos: " + score;
+                    bots[index] = createBot(index); // Cria um bot novo no topo
+                }
+
+                // Caixa de Colisão (Hitbox)
+                if (
+                    player.x < bot.x + bot.width &&
+                    player.x + player.width > bot.x &&
+                    player.y < bot.y + bot.height &&
+                    player.y + player.height > bot.y
+                ) {
+
+            
