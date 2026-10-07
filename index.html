@@ -18,8 +18,6 @@
             color: white;
             overflow: hidden;
         }
-
-        /* Menu Inicial */
         #menuContainer {
             background-color: #1e1e1e;
             padding: 40px;
@@ -30,7 +28,6 @@
             max-width: 400px;
             width: 90%;
         }
-
         #menuContainer h1 {
             color: #ff4500;
             font-size: 2.5rem;
@@ -38,16 +35,13 @@
             text-transform: uppercase;
             letter-spacing: 2px;
         }
-
         #menuContainer p {
             color: #aaa;
             margin-bottom: 25px;
         }
-
         .input-group {
             margin-bottom: 20px;
         }
-
         #playerNameInput {
             width: 80%;
             padding: 12px 20px;
@@ -60,11 +54,9 @@
             text-align: center;
             transition: border-color 0.3s;
         }
-
         #playerNameInput:focus {
             border-color: #ff4500;
         }
-
         #startBtn {
             background: linear-gradient(135deg, #ff4500, #b30000);
             color: white;
@@ -79,18 +71,14 @@
             box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
             transition: transform 0.2s, box-shadow 0.2s;
         }
-
         #startBtn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 69, 0, 0.6);
         }
-
-        /* Área do Jogo (Escondida ao início) */
         #gameContainer {
             display: none;
             text-align: center;
         }
-
         #gameUi {
             display: flex;
             justify-content: space-between;
@@ -101,19 +89,16 @@
             padding: 0 10px;
             box-sizing: border-box;
         }
-
         #playerGreeting {
             font-size: 20px;
             font-weight: bold;
             color: #fff;
         }
-
         #score {
             font-size: 22px;
             font-weight: bold;
             color: #ff4500;
         }
-
         canvas {
             background-color: #282828;
             border: 4px solid #ff4500;
@@ -121,7 +106,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: block;
         }
-
         .controls-info {
             margin-top: 15px;
             font-size: 14px;
@@ -130,8 +114,6 @@
     </style>
 </head>
 <body>
-
-    <!-- MENU INICIAL -->
     <div id="menuContainer">
         <h1>Drift Garage</h1>
         <p>Prepara a tua máquina e enfrenta os Bots</p>
@@ -140,21 +122,16 @@
         </div>
         <button id="startBtn">Jogar</button>
     </div>
-
-    <!-- ÁREA DO JOGO -->
     <div id="gameContainer">
         <div id="gameUi">
             <div id="playerGreeting">Piloto: <span id="displayPlayerName" style="color: #ff4500;"></span></div>
             <div id="score">Pontos: 0</div>
         </div>
-
         <canvas id="gameCanvas" width="800" height="500"></canvas>
-
         <div class="controls-info">
-            <strong>Controlos:</strong> Usa as Setas Esquerda/Direita (or A/D) para curvar e fazer drift!
+            <strong>Controlos:</strong> Usa as Setas Esquerda/Direita (ou A/D) para curvar e fazer drift!
         </div>
     </div>
-
     <script>
         const menuContainer = document.getElementById("menuContainer");
         const gameContainer = document.getElementById("gameContainer");
@@ -170,10 +147,7 @@
         let gameStarted = false;
         let playerName = "Piloto";
 
-        // Detetar clique no botão de Start
         startBtn.addEventListener("click", startGame);
-        
-        // Permitir entrar carregando no Enter
         playerNameInput.addEventListener("keydown", (e) => {
             if (e.key === "Enter") startGame();
         });
@@ -183,16 +157,12 @@
                 playerName = playerNameInput.value.trim();
             }
             displayPlayerName.innerText = playerName;
-            
-            // Trocar os menus
             menuContainer.style.display = "none";
             gameContainer.style.display = "block";
-            
             gameStarted = true;
             resetGame();
         }
 
-        // Jogador (Carro Vermelho)
         const player = {
             x: canvas.width / 2 - 15,
             y: canvas.height - 90,
@@ -203,10 +173,9 @@
             maxDrift: 18
         };
 
-        // Bots (Carros Inimigos)
         const bots = [];
         const botCount = 4;
-        const botColors = ["#888888", "#3a5fcd", "#008b45", "#cd8500"]; // Cores diferentes para os bots
+        const botColors = ["#888888", "#3a5fcd", "#008b45", "#cd8500"];
 
         function createBot(index) {
             return {
@@ -219,59 +188,40 @@
             };
         }
 
-        // Teclas
         const keys = {};
         window.addEventListener("keydown", (e) => { if(gameStarted) keys[e.key] = true; });
         window.addEventListener("keyup", (e) => { if(gameStarted) keys[e.key] = false; });
 
-        // Desenhar Carros
         function drawCar(x, y, width, height, color, angle = 0) {
             ctx.save();
             ctx.translate(x + width / 2, y + height / 2);
             ctx.rotate(angle * Math.PI / 180);
-            
-            // Sombra do carro
             ctx.fillStyle = "rgba(0,0,0,0.2)";
             ctx.fillRect(-width / 2 + 4, -height / 2 + 4, width, height);
-
-            // Chassi Principal
             ctx.fillStyle = color;
             ctx.fillRect(-width / 2, -height / 2, width, height);
-            
-            // Spoiler traseiro (Asa de drift)
             ctx.fillStyle = "#111";
             ctx.fillRect(-width / 2 - 2, height / 2 - 4, width + 4, 5);
-            
-            // Para-brisas e Vidros
             ctx.fillStyle = "#add8e6";
-            ctx.fillRect(-width / 2 + 3, -height / 2 + 10, width - 6, 12); // Frontal
-            ctx.fillRect(-width / 2 + 3, -height / 2 + 28, width - 6, 8);  // Traseiro
-            
-            // Faróis Dianteiros
+            ctx.fillRect(-width / 2 + 3, -height / 2 + 10, width - 6, 12);
+            ctx.fillRect(-width / 2 + 3, -height / 2 + 28, width - 6, 8);
             ctx.fillStyle = "#ffff00";
             ctx.fillRect(-width / 2 + 3, -height / 2, 6, 3);
             ctx.fillRect(width / 2 - 9, -height / 2, 6, 3);
-
-            // Faróis de travão traseiros
             ctx.fillStyle = "#ff0000";
             ctx.fillRect(-width / 2 + 2, height / 2 - 2, 5, 2);
             ctx.fillRect(width / 2 - 7, height / 2 - 2, 5, 2);
-
             ctx.restore();
         }
 
         function update() {
             if (!gameStarted) return;
-
             if (gameOver) {
-                // Se perder, qualquer tecla de movimento reinicia a corrida
                 if (keys["ArrowLeft"] || keys["ArrowRight"] || keys["a"] || keys["d"]) {
                     resetGame();
                 }
                 return;
             }
-
-            // Movimento e Inclinação de Drift do Jogador
             if (keys["ArrowLeft"] || keys["a"]) {
                 if (player.x > 5) player.x -= player.speed;
                 if (player.driftAngle > -player.maxDrift) player.driftAngle -= 2.5;
@@ -279,29 +229,73 @@
                 if (player.x < canvas.width - player.width - 5) player.x += player.speed;
                 if (player.driftAngle < player.maxDrift) player.driftAngle += 2.5;
             } else {
-                // Alinhar rodas quando solta as teclas
                 if (player.driftAngle > 0) player.driftAngle -= 1.5;
                 if (player.driftAngle < 0) player.driftAngle += 1.5;
                 if (Math.abs(player.driftAngle) < 1.5) player.driftAngle = 0;
             }
-
-            // Movimentação dos Bots
             bots.forEach((bot, index) => {
                 bot.y += bot.speed;
-
-                // Passou a meta (fundo do ecrã)
                 if (bot.y > canvas.height) {
                     score += 10;
                     scoreElement.innerText = "Pontos: " + score;
-                    bots[index] = createBot(index); // Cria um bot novo no topo
+                    bots[index] = createBot(index);
                 }
-
-                // Caixa de Colisão (Hitbox)
                 if (
                     player.x < bot.x + bot.width &&
                     player.x + player.width > bot.x &&
                     player.y < bot.y + bot.height &&
                     player.y + player.height > bot.y
                 ) {
+                    gameOver = true;
+                }
+            });
+        }
 
-            
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "#444";
+            ctx.lineWidth = 3;
+            for (let i = 0; i < canvas.width; i += 100) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            bots.forEach(bot => {
+                drawCar(bot.x, bot.y, bot.width, bot.height, bot.color);
+            });
+            drawCar(player.x, player.y, player.width, player.height, "#ff4500", player.driftAngle);
+            if (gameOver) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#ff4500";
+                ctx.font = "bold 38px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("FIM DA CORRIDA, " + playerName.toUpperCase() + "!", canvas.width / 2, canvas.height / 2 - 20);
+                ctx.fillStyle = "white";
+                ctx.font = "20px Arial";
+                ctx.fillText("Carrega nas Setas ou A/D para voltar à pista", canvas.width / 2, canvas.height / 2 + 30);
+            }
+        }
+
+        function resetGame() {
+            score = 0;
+            scoreElement.innerText = "Pontos: " + score;
+            player.x = canvas.width / 2 - player.width / 2;
+            player.driftAngle = 0;
+            gameOver = false;
+            bots.length = 0;
+            for (let i = 0; i < botCount; i++) {
+                bots.push(createBot(i));
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+    </script>
+</body>
+</html>
